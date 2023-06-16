@@ -1,0 +1,30 @@
+// $ cd ./server
+// $ python -m grpc_tools.protoc -I../protos --python_out=. --grpc_python_out=. ../protos/truco.proto
+
+syntax = "proto3";
+package trucopackage;
+import "google/protobuf/empty.proto";
+
+service Truco{
+    // rpc signin(Query) returns (QueryReply) {};
+    // rpc signout(Query) returns (QueryReply) {};
+    rpc showTables(google.protobuf.Empty) returns (stream Table);
+    rpc createNewTable(Table) returns (QueryReply) {};
+    rpc joinTable(Query) returns (Query) {};
+    rpc exitTable(Query) returns (Query) {};
+}
+
+message Table {
+    string name = 1;
+    repeated string TeamA = 2;
+    repeated string TeamB = 3;
+    repeated int32 scoreboard = 4;
+}
+
+message Query {
+    repeated string args = 1;
+}
+
+message QueryReply {
+    string status = 1;
+}
