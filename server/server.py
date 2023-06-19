@@ -7,39 +7,67 @@ import truco_pb2
 import truco_pb2_grpc
 from google.protobuf.json_format import MessageToJson
 
+from game import Truco
 
 class TrucoServicer(truco_pb2_grpc.TrucoServicer):
     def __init__(self):
-        self.activeTables = []
+        self.activeTables = dict()
     #end init
-    
-    # def signin(self, request, context):
-    #     pass
 
-    # def signout(self, request, context):
-    #     pass
-
+    # ------------------------------------------------
     def showTables(self, request, context):
-        for table in self.activeTables:
+        for _, table in self.activeTables.items():
             yield self.tableToProtobuf(table)
+    #end showtables
 
+    # ------------------------------------------------
     def createNewTable(self, request, context):
-        pass
+        #checar se ja existe uma mesa com tablename
+        if self.activeTables.get(request.tablename):
+            return truco_pb2.QueryReply(status = False)
 
+        #criar mesa
+        table = Truco(request.tablename)
+        self.activeTables[request.tablename] = table
+        return truco_pb2.QueryReply(status = True)
+    #end createnewtable
+
+    # ------------------------------------------------
     def joinTable(self, request, context):
-        pass
+        table = self.activeTables.get(request.tablename)
 
+        #checar se existe uma mesa com tablename
+        if not table:
+            return truco_pb2.QueryReply(status = False)
+        
+        #checar se há vagas
+        status = table.join(request.nickname, request.team)
+        return truco_pb2.QueryReply(status = True if status else False)            
+    #end jointable
+
+    # ------------------------------------------------
     def exitTable(self, request, context):
-        pass
+        table = self.activeTables.get(request.tablename)
+
+        #checar se existe uma mesa com tablename
+        if not table:
+            return truco_pb2.QueryReply(status = False)
+        
+        #checar se há vagas
+        status = table.exit(request.nickname)
+        return truco_pb2.QueryReply(status = True if status else False)   
     #end functions
 
+    # ==================================================
     #start auxiliaries
-    def tableToProtobuf(table):
+    def tableToProtobuf(self, table):
         t = truco_pb2.Table()
-        t.name = table.name
-        t.teamA.extend(table.players[0:2])
-        t.teamB.extend(table.players[2:4])
-        t.scoreboard.extend(table.scoreboard)
+        tt = table.abstract()
+        print(tt)
+        t.name = tt['name']
+        t.team_A.extend(tt['TeamA'])
+        t.team_B.extend(tt['TeamB'])
+        # t.scoreboard.extend(table.scoreboard)
         return t
     #end aux
 #end server

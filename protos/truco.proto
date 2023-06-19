@@ -3,28 +3,29 @@
 
 syntax = "proto3";
 package trucopackage;
-import "google/protobuf/empty.proto";
+// import "google/protobuf/empty.proto";
 
 service Truco{
-    // rpc signin(Query) returns (QueryReply) {};
-    // rpc signout(Query) returns (QueryReply) {};
-    rpc showTables(google.protobuf.Empty) returns (stream Table);
-    rpc createNewTable(Table) returns (QueryReply) {};
-    rpc joinTable(Query) returns (Query) {};
-    rpc exitTable(Query) returns (Query) {};
+    rpc showTables(Query) returns (stream Table);
+    rpc createNewTable(Query) returns (QueryReply) {};
+    rpc joinTable(Query) returns (QueryReply) {};
+    rpc exitTable(Query) returns (QueryReply) {};
 }
 
 message Table {
     string name = 1;
-    repeated string TeamA = 2;
-    repeated string TeamB = 3;
+    repeated string team_A = 2;
+    repeated string team_B = 3;
     repeated int32 scoreboard = 4;
 }
 
 message Query {
-    repeated string args = 1;
+    string tablename = 1;
+    string nickname = 2;
+    string team = 3;
 }
 
 message QueryReply {
-    string status = 1;
+    bool status = 1;
+    string queue = 2;
 }

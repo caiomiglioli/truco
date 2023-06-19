@@ -2,7 +2,6 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 import truco_pb2 as truco__pb2
 
 
@@ -17,23 +16,23 @@ class TrucoStub(object):
         """
         self.showTables = channel.unary_stream(
                 '/trucopackage.Truco/showTables',
-                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                request_serializer=truco__pb2.Query.SerializeToString,
                 response_deserializer=truco__pb2.Table.FromString,
                 )
         self.createNewTable = channel.unary_unary(
                 '/trucopackage.Truco/createNewTable',
-                request_serializer=truco__pb2.Table.SerializeToString,
+                request_serializer=truco__pb2.Query.SerializeToString,
                 response_deserializer=truco__pb2.QueryReply.FromString,
                 )
         self.joinTable = channel.unary_unary(
                 '/trucopackage.Truco/joinTable',
                 request_serializer=truco__pb2.Query.SerializeToString,
-                response_deserializer=truco__pb2.Query.FromString,
+                response_deserializer=truco__pb2.QueryReply.FromString,
                 )
         self.exitTable = channel.unary_unary(
                 '/trucopackage.Truco/exitTable',
                 request_serializer=truco__pb2.Query.SerializeToString,
-                response_deserializer=truco__pb2.Query.FromString,
+                response_deserializer=truco__pb2.QueryReply.FromString,
                 )
 
 
@@ -71,23 +70,23 @@ def add_TrucoServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'showTables': grpc.unary_stream_rpc_method_handler(
                     servicer.showTables,
-                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    request_deserializer=truco__pb2.Query.FromString,
                     response_serializer=truco__pb2.Table.SerializeToString,
             ),
             'createNewTable': grpc.unary_unary_rpc_method_handler(
                     servicer.createNewTable,
-                    request_deserializer=truco__pb2.Table.FromString,
+                    request_deserializer=truco__pb2.Query.FromString,
                     response_serializer=truco__pb2.QueryReply.SerializeToString,
             ),
             'joinTable': grpc.unary_unary_rpc_method_handler(
                     servicer.joinTable,
                     request_deserializer=truco__pb2.Query.FromString,
-                    response_serializer=truco__pb2.Query.SerializeToString,
+                    response_serializer=truco__pb2.QueryReply.SerializeToString,
             ),
             'exitTable': grpc.unary_unary_rpc_method_handler(
                     servicer.exitTable,
                     request_deserializer=truco__pb2.Query.FromString,
-                    response_serializer=truco__pb2.Query.SerializeToString,
+                    response_serializer=truco__pb2.QueryReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -111,7 +110,7 @@ class Truco(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/trucopackage.Truco/showTables',
-            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            truco__pb2.Query.SerializeToString,
             truco__pb2.Table.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -128,7 +127,7 @@ class Truco(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/trucopackage.Truco/createNewTable',
-            truco__pb2.Table.SerializeToString,
+            truco__pb2.Query.SerializeToString,
             truco__pb2.QueryReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -146,7 +145,7 @@ class Truco(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/trucopackage.Truco/joinTable',
             truco__pb2.Query.SerializeToString,
-            truco__pb2.Query.FromString,
+            truco__pb2.QueryReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -163,6 +162,6 @@ class Truco(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/trucopackage.Truco/exitTable',
             truco__pb2.Query.SerializeToString,
-            truco__pb2.Query.FromString,
+            truco__pb2.QueryReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
