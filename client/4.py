@@ -3,6 +3,8 @@ import grpc
 import truco_pb2 as proto
 import truco_pb2_grpc as rpc
 
+from game import TrucoClient
+
 async def showTables(stub):
     q = proto.Query()
     tables = stub.showTables(q)
@@ -23,7 +25,9 @@ async def createTable(stub, tablename):
 async def joinTable(stub, tablename, nickname, team):
     q = proto.Query(tablename=tablename, nickname=nickname, team=team)
     qReply = await stub.joinTable(q)
-    print(qReply.status)
+    if qReply.status:
+        return (qReply.cmdQueue, qReply.cliQueue)
+    return None
 #end join
 
 async def exitTable(stub, tablename, nickname):
@@ -32,28 +36,19 @@ async def exitTable(stub, tablename, nickname):
     print(qReply.status)
 #end join
 
-
+# ------------------------------------------------------------------------
 async def main():
+    nickname = 'p4'
+    team = 'B'
+
     async with grpc.aio.insecure_channel('localhost:7777') as channel:
         stub = rpc.TrucoStub(channel)
 
-        print("-------------- showTables --------------")
-        await showTables(stub)
-
-        print("-------------- createTable --------------")
-        await createTable(stub, 'Teste')
-
         print("-------------- joinTable --------------")
-        await joinTable(stub, 'Teste', 'player1', 'A')
+        queues = await joinTable(stub, 'Teste', nickname, team)
 
-        print("-------------- showTables --------------")
-        await showTables(stub)
-
-        print("-------------- exitTable --------------")
-        await exitTable(stub, 'Teste', 'player1')
-
-        print("-------------- showTables --------------")
-        await showTables(stub)
+    print("-------------- Play --------------")
+    client = TrucoClient(queues, nickname, team)
     #end with
 #end main
 

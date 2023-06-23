@@ -7,7 +7,7 @@ import truco_pb2
 import truco_pb2_grpc
 from google.protobuf.json_format import MessageToJson
 
-from game import Truco
+from game import TrucoServer
 
 class TrucoServicer(truco_pb2_grpc.TrucoServicer):
     def __init__(self):
@@ -27,7 +27,7 @@ class TrucoServicer(truco_pb2_grpc.TrucoServicer):
             return truco_pb2.QueryReply(status = False)
 
         #criar mesa
-        table = Truco(request.tablename)
+        table = TrucoServer(request.tablename)
         self.activeTables[request.tablename] = table
         return truco_pb2.QueryReply(status = True)
     #end createnewtable
@@ -42,7 +42,10 @@ class TrucoServicer(truco_pb2_grpc.TrucoServicer):
         
         #checar se há vagas
         status = table.join(request.nickname, request.team)
-        return truco_pb2.QueryReply(status = True if status else False)            
+        if not status:            
+            return truco_pb2.QueryReply(status = False)
+        
+        return truco_pb2.QueryReply(status=True, cmdQueue=status[0], cliQueue=status[1])         
     #end jointable
 
     # ------------------------------------------------

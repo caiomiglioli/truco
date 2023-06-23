@@ -27,5 +27,6 @@ message Query {
 
 message QueryReply {
     bool status = 1;
-    string queue = 2;
+    string cmdQueue = 2;
+    string cliQueue = 3;
 }
