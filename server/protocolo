@@ -23,8 +23,10 @@
   { cmd: start-mao, order: [A, B, ..], maowinners: ['A', 'B', ...], nextplayer: A1, truco: false, trucoTeam: None}
   { cmd: play, type: card, nickname: A1, card: 'A♣', nextplayer: B1, cardsInPlay: self.cardsInPlay, truco: false, trucoTeam: None}
 
-  { cmd: play, type: truco, nickname: B1, nextplayer: A2, truco: true, trucoTeam: B}
-  { cmd: play, type: accept, nickname: A2, nextplayer: B1, truco: 3, trucoTeam: B}
+  # truco
+  { cmd: play, type: truco, nickname: B1, nextplayer: A2, truco: 3, trucoTeam: B}
+  { cmd: play, type: seis, nickname: A2, nextplayer: B1, truco: 6, trucoTeam: A}
+  { cmd: play, type: accept, nickname: B1, nextplayer: B1, truco: 6, trucoTeam: B}
   
   { cmd: play, type: card, nickname: B1, card: 'A♣', nextplayer: A2, cardsInPlay: self.cardsInPlay} #falta o truco ainda
   { cmd: play, type: card, nickname: A2, card: 'A♣', nextplayer: B2, cardsInPlay: self.cardsInPlay}
