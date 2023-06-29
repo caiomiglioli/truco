@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0btruco.proto\x12\x0ctrucopackage\"I\n\x05Table\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06team_A\x18\x02 \x03(\t\x12\x0e\n\x06team_B\x18\x03 \x03(\t\x12\x12\n\nscoreboard\x18\x04 \x03(\x05\":\n\x05Query\x12\x11\n\ttablename\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\x12\x0c\n\x04team\x18\x03 \x01(\t\"@\n\nQueryReply\x12\x0e\n\x06status\x18\x01 \x01(\x08\x12\x10\n\x08\x63mdQueue\x18\x02 \x01(\t\x12\x10\n\x08\x63liQueue\x18\x03 \x01(\t2\x80\x02\n\x05Truco\x12\x38\n\nshowTables\x12\x13.trucopackage.Query\x1a\x13.trucopackage.Table0\x01\x12\x41\n\x0e\x63reateNewTable\x12\x13.trucopackage.Query\x1a\x18.trucopackage.QueryReply\"\x00\x12<\n\tjoinTable\x12\x13.trucopackage.Query\x1a\x18.trucopackage.QueryReply\"\x00\x12<\n\texitTable\x12\x13.trucopackage.Query\x1a\x18.trucopackage.QueryReply\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0btruco.proto\x12\x0ctrucopackage\"W\n\x05Table\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06team_A\x18\x02 \x03(\t\x12\x0e\n\x06team_B\x18\x03 \x03(\t\x12\x12\n\nscoreboard\x18\x04 \x03(\x05\x12\x0c\n\x04init\x18\x05 \x01(\t\":\n\x05Query\x12\x11\n\ttablename\x18\x01 \x01(\t\x12\x10\n\x08nickname\x18\x02 \x01(\t\x12\x0c\n\x04team\x18\x03 \x01(\t\"@\n\nQueryReply\x12\x0e\n\x06status\x18\x01 \x01(\x08\x12\x10\n\x08\x63mdQueue\x18\x02 \x01(\t\x12\x10\n\x08\x63liQueue\x18\x03 \x01(\t2\x80\x02\n\x05Truco\x12\x38\n\nshowTables\x12\x13.trucopackage.Query\x1a\x13.trucopackage.Table0\x01\x12\x41\n\x0e\x63reateNewTable\x12\x13.trucopackage.Query\x1a\x18.trucopackage.QueryReply\"\x00\x12<\n\tjoinTable\x12\x13.trucopackage.Query\x1a\x18.trucopackage.QueryReply\"\x00\x12<\n\texitTable\x12\x13.trucopackage.Query\x1a\x18.trucopackage.QueryReply\"\x00\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'truco_pb2', globals())
@@ -21,11 +21,11 @@ if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   _TABLE._serialized_start=29
-  _TABLE._serialized_end=102
-  _QUERY._serialized_start=104
-  _QUERY._serialized_end=162
-  _QUERYREPLY._serialized_start=164
-  _QUERYREPLY._serialized_end=228
-  _TRUCO._serialized_start=231
-  _TRUCO._serialized_end=487
+  _TABLE._serialized_end=116
+  _QUERY._serialized_start=118
+  _QUERY._serialized_end=176
+  _QUERYREPLY._serialized_start=178
+  _QUERYREPLY._serialized_end=242
+  _TRUCO._serialized_start=245
+  _TRUCO._serialized_end=501
 # @@protoc_insertion_point(module_scope)

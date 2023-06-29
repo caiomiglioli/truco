@@ -10,6 +10,7 @@ class TrucoServer:
         #table info
         self.tablename = tablename
         self.rounds2Win = 12
+        self.init = 'Esperando'
         # self.playerHash = dict()
 
         #game info
@@ -31,14 +32,14 @@ class TrucoServer:
         self.cardsInPlay = None
         self.score = 0
 
-        #Game Listener
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost', '5672'))
-        self.channel = self.connection.channel()
-        self.channel.queue_delete(queue=tablename+'-commands')
-        self.channel.queue_declare(queue=tablename+'-commands') #coordinator vai ler e os clientes vão publicar
-        self.channel.queue_delete(queue=tablename+'-clients')
-        # self.channel.queue_declare(queue=tablename+'-clients') #coordinator vai publicar e os clientes vão ler
-        self.channel.exchange_declare(exchange=tablename+'-clients', exchange_type='fanout')
+        # #Game Listener
+        # self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost', '5672'))
+        # self.channel = self.connection.channel()
+        # self.channel.queue_delete(queue=tablename+'-commands')
+        # self.channel.queue_declare(queue=tablename+'-commands') #coordinator vai ler e os clientes vão publicar
+        # self.channel.queue_delete(queue=tablename+'-clients')
+        # # self.channel.queue_declare(queue=tablename+'-clients') #coordinator vai publicar e os clientes vão ler
+        # self.channel.exchange_declare(exchange=tablename+'-clients', exchange_type='fanout')
 
         # channel.queue_delete(queue='hello')
         thread = threading.Thread(target=self.listen)
@@ -46,28 +47,36 @@ class TrucoServer:
     #end init
     
     def abstract(self):
-        return { 'name': self.tablename, 'TeamA': self.players['A'], 'TeamB': self.players['B']}
+        return { 'name': self.tablename, 'init': self.init, 'TeamA': self.players['A'], 'TeamB': self.players['B'], 'scoreboard': self.scoreboard}
     #end abstract
     
     def join(self, nickname, team):
+        if self.init != 'Esperando':
+            return (False, 'GameInitiated')
+        
         #se o time ja tem jogadores o suficiente
         if len(self.players[team]) >= 2:
-            return False
+            return (False, 'FullTeam')
         
         #se ja tem um jogador com esse nickname na partida
         if nickname in (self.players['A'] + self.players['B']):
-            return False
+            return (False, 'DuplicatedName')
         
         #adicionar jogadores na partida
         self.players[team].append(nickname)
-        return (self.tablename+'-commands', self.tablename+'-clients') #, hash)
+        return (True, (self.tablename+'-commands', self.tablename+'-clients')) #, hash)
     #end join
 
     def exit(self, nickname):
-        if nickname in self.players['A']: self.players['A'].remove(nickname)
-        elif nickname in self.players['B']: self.players['B'].remove(nickname)
-        else: return False
+        if self.init != 'Esperando':
+            self.init = 'Esperando'
+            self.handleWithdraw(nickname)
+
+        team = 'A' if nickname in self.players['A'] else 'B'
+        self.players[team].remove(nickname)
         self.checkin -= 1
+        self.publish({'cmd': 'exit', 'nickname': nickname, 'team': team})
+        
         if self.checkin <= 0:
             return 'delete'
         return True
@@ -76,6 +85,7 @@ class TrucoServer:
     # =================================================================
 
     def startGame(self):
+        self.init = 'Jogando'
         self.playOrder = [self.players['A'][0], self.players['B'][0], self.players['A'][1], self.players['B'][1]]
         self.cards = dict()
         self.scoreboard = [0, 0]
@@ -85,6 +95,9 @@ class TrucoServer:
     #end
 
     def startRound(self):
+        if self.init == 'Esperando':
+            return
+        
         # vira
         bar = sum([[v+n for n in ['♣','♥','♠','♦']] for v in ['4', '5', '6', '7', 'Q', 'J', 'K', 'A', '2', '3']], [])
         random.shuffle(bar)
@@ -230,6 +243,7 @@ class TrucoServer:
     #end check
    
     def endGame(self):
+        self.init = 'Finalizado'
         winner = 'A' if self.scoreboard[0] >= self.rounds2Win else 'B'
         self.publish({'cmd': 'result-game', 'winnerTeam': winner, 'scoreboard': self.scoreboard})
         self.publish({'cmd': 'end-game'})
@@ -258,32 +272,50 @@ class TrucoServer:
         match msg['cmd']:
             case 'checkin':
                 self.checkin += 1
-                print(f'{self.tablename}: {msg["nickname"]} check-in ({self.checkin}/4)\n')
-                self.publish({'cmd': 'checkin', 'nickname': msg['nickname'], 'checkin-total': self.checkin})
+                team = 'A' if msg["nickname"] in self.players['A'] else 'B'
+
+                print(f'{self.tablename}: {msg["nickname"]} (Team {team}) check-in ({self.checkin}/4)')
+                self.publish({'cmd': 'checkin', 'nickname': msg['nickname'], 'team': team, 'checkin-total': self.checkin})
 
                 if self.checkin == 4:
-                    self.startGame()
+                    self.init = 'Jogando'
+                    if self.scoreboard == [0, 0]: self.startGame()
+                    else: self.startRound()
             #end checkin
 
             case 'play':
-                if msg['type'] == 'card':
-                    self.throwCard(msg)
-                
-                elif msg['type'] == 'withdraw':
-                    self.handleWithdraw(msg['nickname'])
+                if self.init != 'Esperando':
+                    if msg['type'] == 'card':
+                        self.throwCard(msg)
+                    
+                    elif msg['type'] == 'withdraw':
+                        self.handleWithdraw(msg['nickname'])
 
-                elif msg['type'] == 'truco':
-                    self.handleTruco(msg['nickname'])
+                    elif msg['type'] == 'truco':
+                        self.handleTruco(msg['nickname'])
 
-                elif msg['type'] == 'accept':
-                    self.handleAccept(msg['nickname'], msg['direction'])
+                    elif msg['type'] == 'accept':
+                        self.handleAccept(msg['nickname'], msg['direction'])
 
-                elif msg['type'] == 'seis':
-                    self.handleSeis(msg['nickname'], msg['inResponse'])
+                    elif msg['type'] == 'seis':
+                        self.handleSeis(msg['nickname'], msg['inResponse'])
             #end play
     #end
 
     def listen(self):
+        #Game Listener
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost', '5672'))
+        self.channel = self.connection.channel()
+        self.channel.queue_delete(queue=self.tablename+'-commands')
+        self.channel.queue_declare(queue=self.tablename+'-commands') #coordinator vai ler e os clientes vão publicar
+        self.channel.queue_delete(queue=self.tablename+'-clients')
+        # self.channel.queue_declare(queue=tablename+'-clients') #coordinator vai publicar e os clientes vão ler
+        self.channel.exchange_declare(exchange=self.tablename+'-clients', exchange_type='fanout')
+
         # self.truco = False
-        self.channel.basic_consume(self.tablename+'-commands', self.gameCoordinator, auto_ack=True) ### se usar auto_ack=true nao precisa do ack dentro do classify
-        self.channel.start_consuming()
+        try:
+            self.channel.basic_consume(self.tablename+'-commands', self.gameCoordinator, auto_ack=True) ### se usar auto_ack=true nao precisa do ack dentro do classify
+            self.channel.start_consuming()
+        except Exception as e:
+            print('Houve um erro... Reiniciando...:', e)
+            self.listen()

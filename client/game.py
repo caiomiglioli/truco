@@ -1,13 +1,13 @@
 import pika
 import json
-
+from time import sleep
 import threading
 
 class TrucoClient:
-    def __init__(self, queues, nickname, team):
+    def __init__(self, queues, nickname):
         self.queues = queues
         self.nickname = nickname
-        self.myTeam = team
+        self.myTeam = None
         self.timeA = None
         self.timeB = None
         self.mycards = None
@@ -18,7 +18,7 @@ class TrucoClient:
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=self.queues[0]) #coordinator vai ler e os clientes vão publicar
         self.channel.queue_declare(queue=self.queues[1]) #coordinator vai ler e os clientes vão publicar
-      
+    
         #listener
         # self.channel.exchange_declare(exchange=self.queues[1], exchange_type='fanout')
         # self.channel.queue_declare(queue=self.queues[1]) #coordinator vai publicar e os clientes vão ler
@@ -26,16 +26,23 @@ class TrucoClient:
         # listener fanout
         self.channel.exchange_declare(exchange=self.queues[1], exchange_type='fanout')  # Declara uma nova troca do tipo "fanout"
         result = self.channel.queue_declare(queue='', exclusive=True)                   # Cria uma fila exclusiva para cada cliente
-        queue_name = result.method.queue                                                # Cria uma fila exclusiva para cada cliente
-        self.channel.queue_bind(exchange=self.queues[1], queue=queue_name)              # Vincula a fila à troca do tipo "fanout"
+        self.bindedQueue = queue_name = result.method.queue                                                # Cria uma fila exclusiva para cada cliente
+        self.channel.queue_bind(exchange=self.queues[1], queue=self.bindedQueue)              # Vincula a fila à troca do tipo "fanout"
         
         #manda o checkin pro servidor
         # print('publicando checkin:', self.queues[0])
         self.channel.basic_publish(exchange='', routing_key=self.queues[0], body=json.dumps({'cmd': 'checkin', 'nickname': nickname}))
-        
-        # print('lendo:', queue_name)
-        self.channel.basic_consume(queue_name, self.gameCoordinator) #, no_ack=True) ### se usar auto_ack=true nao precisa do ack dentro do classify
-        self.channel.start_consuming()
+            
+        try:
+            # print('lendo:', queue_name)
+            print('=============================== Iniciando Mesa')
+            self.channel.basic_consume(queue_name, self.gameCoordinator) #, no_ack=True) ### se usar auto_ack=true nao precisa do ack dentro do classify
+            self.channel.start_consuming()
+        except:
+            self.channel.stop_consuming()
+            self.channel.queue_unbind(exchange=self.queues[1], queue=self.bindedQueue)
+            self.connection.close()
+            print('Saindo...')
     #end play
 
     def publish(self, msg):
@@ -75,7 +82,7 @@ class TrucoClient:
 
         #comandos
         while(True):
-            jogada = input('>').split(' ')
+            jogada = input('> ').split(' ')
 
             #correr é sempre uma opção
             if jogada[0] == 'correr':
@@ -120,7 +127,9 @@ class TrucoClient:
 
         match msg['cmd']:
             case 'checkin':
-                print(f"{msg['nickname']} ({msg['checkin-total']}/4) check-in")
+                if msg['nickname'] == self.nickname:
+                    self.myTeam = msg['team']
+                print(f"{msg['nickname']} (Team {msg['team']}) ({msg['checkin-total']}/4) check-in")
 
             case 'start-game':
                 self.timeA = msg['timeA']
@@ -184,5 +193,9 @@ class TrucoClient:
             case 'end-game':
                 print('Finalizando sessão...')
                 self.channel.stop_consuming()
-
+            
+            case 'exit':
+                if msg['nickname'] == self.nickname:
+                    self.myTeam = msg['team']
+                print(f"{msg['nickname']} (Team {msg['team']}) deixou a mesa.")
 #end game

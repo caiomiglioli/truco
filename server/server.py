@@ -24,7 +24,8 @@ class TrucoServicer(truco_pb2_grpc.TrucoServicer):
     def createNewTable(self, request, context):
         #checar se ja existe uma mesa com tablename
         if self.activeTables.get(request.tablename):
-            return truco_pb2.QueryReply(status = False)
+            raise Exception("DuplicatedName")
+            # return truco_pb2.QueryReply(status = False)
 
         #criar mesa
         table = TrucoServer(request.tablename)
@@ -38,14 +39,15 @@ class TrucoServicer(truco_pb2_grpc.TrucoServicer):
 
         #checar se existe uma mesa com tablename
         if not table:
-            return truco_pb2.QueryReply(status = False)
+            raise Exception("NotFound")
         
         #checar se há vagas
         status = table.join(request.nickname, request.team)
-        if not status:            
-            return truco_pb2.QueryReply(status = False)
+
+        if not status[0]:            
+            raise Exception(status[1])
         
-        return truco_pb2.QueryReply(status=True, cmdQueue=status[0], cliQueue=status[1])         
+        return truco_pb2.QueryReply(status=True, cmdQueue=status[1][0], cliQueue=status[1][1])         
     #end jointable
 
     # ------------------------------------------------
@@ -68,9 +70,10 @@ class TrucoServicer(truco_pb2_grpc.TrucoServicer):
         tt = table.abstract()
         print(tt)
         t.name = tt['name']
+        t.init = tt['init']
         t.team_A.extend(tt['TeamA'])
         t.team_B.extend(tt['TeamB'])
-        # t.scoreboard.extend(table.scoreboard)
+        t.scoreboard.extend(table.scoreboard)
         return t
     #end aux
 #end server
