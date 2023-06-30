@@ -2,51 +2,58 @@
 ########################### server:
 
 # espera 4 jogadores
-{ cmd: checkin, nickname: A1, checkin-total: self.checkin }
-{ cmd: checkin, nickname: B1, checkin-total: self.checkin }
-{ cmd: checkin, nickname: A2, checkin-total: self.checkin }
-{ cmd: checkin, nickname: B2, checkin-total: self.checkin }
+{ cmd: checkin, nickname: A1, team: A, checkin-total: self.checkin }
+{ cmd: checkin, nickname: B1, team: B,  checkin-total: self.checkin }
+{ cmd: checkin, nickname: A2, team: A,  checkin-total: self.checkin }
+{ cmd: checkin, nickname: B2, team: B,  checkin-total: self.checkin }
 
 # start game
-{ cmd: start-game, scoreboard: [0, 0], timeA: self.players['A'], timeB: self.players['B']}}
+{ cmd: start-game, scoreboard: [0, 0], timeA: self.players[A], timeB: self.players[B]}}
 
 # * repeat till A or B >= 12 *
 #start round
 { cmd: start-round, scoreboard: [1, 0], vira: K♣}
-{ cmd: draw, nickname: A1, draw: ['A♣','A♥','A♠']}
-{ cmd: draw, nickname: B1, draw: ['A♣','A♥','A♠']}
-{ cmd: draw, nickname: A2, draw: ['A♣','A♥','A♠']}
-{ cmd: draw, nickname: B2, draw: ['A♣','A♥','A♠']}
+{ cmd: draw, nickname: A1, cards: [A♣,A♥,A♠]}
+{ cmd: draw, nickname: B1, cards: [A♣,A♥,A♠]}
+{ cmd: draw, nickname: A2, cards: [A♣,A♥,A♠]}
+{ cmd: draw, nickname: B2, cards: [A♣,A♥,A♠]}
 
   # ** repeat 3 times **
   # start mao
-  { cmd: start-mao, order: [A, B, ..], maowinners: ['A', 'B', ...], nextplayer: A1, truco: false, trucoTeam: None}
-  { cmd: play, type: card, nickname: A1, card: 'A♣', nextplayer: B1, cardsInPlay: self.cardsInPlay, truco: false, trucoTeam: None}
+  { cmd: start-mao, order: [A1, B1, ..], maowinners: [A, B, ...], nextplayer: A1, truco: false, trucoTeam: None}
+
+  #throwcard
+  { cmd: play, type: card, nickname: A1, card: A♣, nextplayer: B1, cardsInPlay: self.cardsInPlay, truco: false, trucoTeam: None}
+  ...
+  { cmd: play, type: card, nickname: B2, card: A♣, nextplayer: finish, cardsInPlay: self.cardsInPlay}
 
   # truco
-  { cmd: play, type: truco, nickname: B1, nextplayer: A2, truco: 3, trucoTeam: B}
-  { cmd: play, type: seis, nickname: A2, nextplayer: B1, truco: 6, trucoTeam: A}
+  { cmd: play, type: truco, nickname: B1, nextplayer: A2, truco: 3, trucoTeam: B, direction: direction}
+  { cmd: play, type: seis, nickname: A2, nextplayer: B1, truco: 6, trucoTeam: A, direction: direction}
   { cmd: play, type: accept, nickname: B1, nextplayer: B1, truco: 6, trucoTeam: B}
   
-  { cmd: play, type: card, nickname: B1, card: 'A♣', nextplayer: A2, cardsInPlay: self.cardsInPlay} #falta o truco ainda
-  { cmd: play, type: card, nickname: A2, card: 'A♣', nextplayer: B2, cardsInPlay: self.cardsInPlay}
-  { cmd: play, type: card, nickname: B2, card: 'A♣', nextplayer: finish, cardsInPlay: self.cardsInPlay}
+  # resultado
   { cmd: result-mao, winnerTeam: winnerTeam, winnerPlayer: winnerPlayer, maowinners: self.maoWinners})
 
+  # withdraw
+  {cmd: play, type: withdraw, nickname: nickname}
   # end mao
-  # ** repeat 3 times **
+  # ** repeat max 3 times **
 
 # end round
 { cmd: result-round, winnerTeam: TeamA}
 # * repeat till 12 *
 
 #end game
-{ cmd: result-game, winnerTeam: TeamA}
+{ cmd: result-game, winnerTeam: TeamA, scoreboard: self.scoreboard}
 { cmd: end-game}
+
 
 ###########################
 ########################### player:
-
-{ cmd: 'checkin', nickname: nickname}
-
-{ cmd: 'play', type: 'card', nickname: nickname, cardindex: index }
+{ cmd: checkin, nickname: nickname}
+{ cmd: play, type: card, nickname: nickname, cardindex: index }
+{ cmd: play, type: withdraw, nickname: nickname}
+{ cmd: play, type: truco, nickname: nickname}
+{ cmd: play, type: accept, nickname: nickname, direction: direction}
+{ cmd: play, type: seis, inResponse: trucoRes, nickname: nickname}

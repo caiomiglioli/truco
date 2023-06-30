@@ -60,6 +60,9 @@ class TrucoServicer(truco_pb2_grpc.TrucoServicer):
         
         #checar se há vagas
         status = table.exit(request.nickname)
+        if status == 'delete':
+            obj = self.activeTables[request.tablename]
+            del obj
         return truco_pb2.QueryReply(status = True if status else False)   
     #end functions
 

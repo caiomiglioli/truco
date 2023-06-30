@@ -64,7 +64,7 @@ class TrucoClient:
             if msg['truco'] == 0: #se nao tiver trucado
                 options += 'truco / '
             
-            if msg['truco'] < 6 and msg['trucoTeam'] != self.myTeam:
+            if msg['truco'] > 0 and msg['truco'] < 6 and msg['trucoTeam'] != self.myTeam:
                 options += 'seis / '
 
 

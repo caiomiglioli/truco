@@ -42,6 +42,7 @@ class TrucoServer:
         # self.channel.exchange_declare(exchange=tablename+'-clients', exchange_type='fanout')
 
         # channel.queue_delete(queue='hello')
+        self.firstRun = 0
         thread = threading.Thread(target=self.listen)
         thread.start()
     #end init
@@ -68,14 +69,14 @@ class TrucoServer:
     #end join
 
     def exit(self, nickname):
-        if self.init != 'Esperando':
+        if self.init == 'Jogando':
             self.init = 'Esperando'
             self.handleWithdraw(nickname)
 
         team = 'A' if nickname in self.players['A'] else 'B'
         self.players[team].remove(nickname)
         self.checkin -= 1
-        self.publish({'cmd': 'exit', 'nickname': nickname, 'team': team})
+        # self.publish({'cmd': 'exit', 'nickname': nickname, 'team': team})
         
         if self.checkin <= 0:
             return 'delete'
@@ -257,7 +258,11 @@ class TrucoServer:
     # =================================================================
     
     def publish(self, msg):
-        self.channel.basic_publish(exchange=self.tablename+'-clients', routing_key=self.tablename+'-clients', body=json.dumps(msg))
+        try:
+            self.channel.basic_publish(exchange=self.tablename+'-clients', routing_key=self.tablename+'-clients', body=json.dumps(msg))
+        except Exception as e:
+            print('Houve um erro... Reiniciando...:', e)
+            self.listen()
     #end
 
     def gameCoordinator(self, ch, method_frame, header_frame, body):
@@ -306,13 +311,15 @@ class TrucoServer:
         #Game Listener
         self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost', '5672'))
         self.channel = self.connection.channel()
-        self.channel.queue_delete(queue=self.tablename+'-commands')
+        
+        if self.firstRun == 0:
+            self.channel.queue_delete(queue=self.tablename+'-commands')
+            self.channel.queue_delete(queue=self.tablename+'-clients')
+        self.firstRun = 1
+
         self.channel.queue_declare(queue=self.tablename+'-commands') #coordinator vai ler e os clientes vão publicar
-        self.channel.queue_delete(queue=self.tablename+'-clients')
-        # self.channel.queue_declare(queue=tablename+'-clients') #coordinator vai publicar e os clientes vão ler
         self.channel.exchange_declare(exchange=self.tablename+'-clients', exchange_type='fanout')
 
-        # self.truco = False
         try:
             self.channel.basic_consume(self.tablename+'-commands', self.gameCoordinator, auto_ack=True) ### se usar auto_ack=true nao precisa do ack dentro do classify
             self.channel.start_consuming()
