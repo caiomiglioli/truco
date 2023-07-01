@@ -121,3 +121,6 @@ Para gerenciar os comandos das sessões de jogo, foram implementadas filas de me
 
 # Arquitetura do Sistema
 ![Figura 1](./img/Arquitetura.jpg)
+
+# Link do Vídeo da apresentação
+https://youtu.be/Vxz5DUoj68k
